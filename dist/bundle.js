@@ -5,7 +5,6 @@ const Vec = require("./vector_math");
 const WIDTH = 1280;
 const HEIGHT = 720;
 const G = 6.67e-11;
-const MOVE_SCALER = 1;
 const ZOOM_SCALER = 0.1;
 const cam = { x: 0, y: 0 };
 let current_zoom = 1;
@@ -34,8 +33,8 @@ canvas.addEventListener("mousedown", (e) => {
 });
 canvas.addEventListener("mousemove", (e => {
     if (e.buttons == 2) {
-        cam.x += e.movementX * MOVE_SCALER;
-        cam.y += e.movementY * MOVE_SCALER;
+        cam.x += e.movementX;
+        cam.y += e.movementY;
         reset_state();
         ctx.translate(cam.x, cam.y);
         render_galaxy();
@@ -77,8 +76,28 @@ const render_galaxy = () => {
         ctx.closePath();
     }
 };
+const body_collision = () => {
+    for (let i = 0; i < objects.length; i++) {
+        const body1 = objects[i];
+        for (let j = 0; j < objects.length; j++) {
+            const body2 = objects[j];
+            if (i == j)
+                continue;
+            const delta = Vec.vector2_min_vec(body1.pos, body2.pos);
+            const dist = Vec.vector2_distance(body1.pos, body2.pos);
+            if (dist < body1.radius + body2.radius) {
+                const norm = Vec.vector2_scale(delta, 1 / dist);
+                const diff = body1.radius + body2.radius - dist;
+                const nudge = Vec.vector2_scale(norm, diff / 2);
+                body1.pos = Vec.vector2_min_vec(body1.pos, nudge);
+                body2.pos = Vec.vector2_add_vec(body2.pos, nudge);
+            }
+        }
+    }
+};
 const start_anim = () => {
     update_galaxy();
+    body_collision();
     render_galaxy();
     window.requestAnimationFrame(start_anim);
 };
@@ -89,11 +108,16 @@ if (button) {
     };
 }
 window.addEventListener(`contextmenu`, (e) => e.preventDefault());
+const body1 = { color: "#ffdd33", pos: { x: WIDTH / 2 - 50, y: HEIGHT / 2 }, radius: 10, vel: { x: 0, y: 10 }, mass: 10e5 * 10e5 };
+const body2 = { color: "#ffdd33", pos: { x: WIDTH / 2 + 50, y: HEIGHT / 2 }, radius: 10, vel: { x: 0, y: -10 }, mass: 10e5 * 10e5 };
+objects.push(body1);
+objects.push(body2);
+render_galaxy();
 
 },{"./vector_math":2}],2:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.vector2_multiply = exports.vector2_scale = exports.vector2_add_vec = exports.vector2_add_val = exports.vector2_min_vec = exports.vector2_distance = void 0;
+exports.vector2_multiply = exports.vector2_scale = exports.vector2_add_vec = exports.vector2_add_val = exports.vector2_min_val = exports.vector2_min_vec = exports.vector2_distance = void 0;
 const vector2_distance = (vec1, vec2) => {
     return Math.sqrt(Math.pow(vec2.x - vec1.x, 2) + Math.pow(vec2.y - vec1.y, 2));
 };
@@ -102,6 +126,10 @@ const vector2_min_vec = (vec1, vec2) => {
     return { x: vec1.x - vec2.x, y: vec1.y - vec2.y };
 };
 exports.vector2_min_vec = vector2_min_vec;
+const vector2_min_val = (vec, value) => {
+    return { x: vec.x - value, y: vec.y - value };
+};
+exports.vector2_min_val = vector2_min_val;
 const vector2_add_val = (vec, value) => {
     return { x: vec.x + value, y: vec.y + value };
 };

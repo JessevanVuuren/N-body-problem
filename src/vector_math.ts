@@ -6,6 +6,9 @@ export const vector2_distance = (vec1: Vector2, vec2: Vector2): number => {
 export const vector2_min_vec = (vec1: Vector2, vec2: Vector2): Vector2 => {
   return { x: vec1.x - vec2.x, y: vec1.y - vec2.y };
 }
+export const vector2_min_val = (vec: Vector2, value: number): Vector2 => {
+  return { x: vec.x - value, y: vec.y - value }
+}
 export const vector2_add_val = (vec: Vector2, value: number): Vector2 => {
   return { x: vec.x + value, y: vec.y + value }
 }
